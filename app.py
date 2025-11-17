@@ -16,7 +16,7 @@ app = FastAPI()
 
 # ==== Load model once at startup ====
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "model", "exam_model.pkl")
+MODEL_PATH = os.path.join(BASE_DIR, "exam_model.pkl")
 
 try:
     model = joblib.load(MODEL_PATH)
@@ -118,3 +118,4 @@ def predict_attempt(data: AttemptFeatures):
         "recommendation_text": recommendation_text,
         "topic_score_table": topic_score_table
     }
+
