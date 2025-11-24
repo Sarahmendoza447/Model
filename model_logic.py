@@ -1,16 +1,13 @@
-# --- CONFIGURATION (Based on OBP Criteria) ---
-# Weak Topics: Score < 50% (Basic)
+# --- CONFIGURATION (Based on OBP Criteria) --- 
 WEAK_TOPIC_THRESHOLD = 0.50
-# Developing Topics: 50% <= Score < 75% (Intermediate)
 DEVELOPING_TOPIC_THRESHOLD = 0.75
-# Strong Topics: Score >= 75% (Proficient / Exemplary)
 
-# OBP Band Mapping groups (used for confidence_Weak/Developing/Strong)
-BAND_WEAK_GROUP = ["Basic"]           # Basic
-BAND_DEVELOPING_GROUP = ["Intermediate"] # Intermediate
-BAND_STRONG_GROUP = ["Proficient", "Exemplary"]  # Proficient, Exemplary
+# OBP Band Mapping groups
+BAND_WEAK_GROUP = ["Basic"]
+BAND_DEVELOPING_GROUP = ["Intermediate"]
+BAND_STRONG_GROUP = ["Proficient", "Exemplary"]
 
-# Human-readable labels for the 4 OBP bands
+# Human-readable labels
 bandLabels = {
     "Basic":        "Basic",
     "Intermediate": "Intermediate",
@@ -18,12 +15,7 @@ bandLabels = {
     "Exemplary":    "Exemplary"
 }
 
-
 def get_obp_band_group(pred_band: str) -> str:
-    """
-    Maps the 4 OBP bands to 3 prescriptive groups (Weak, Developing, Strong)
-    for confidence summaries.
-    """
     if pred_band in BAND_WEAK_GROUP:
         return "Weak"
     elif pred_band in BAND_DEVELOPING_GROUP:
@@ -32,13 +24,26 @@ def get_obp_band_group(pred_band: str) -> str:
         return "Strong"
     return "Unknown"
 
+def analyze_topics(topic_scores: dict):
+    """
+    topic_scores: dict like {"Topic Name": score_in_0_to_1, ...}
+
+    Returns:
+        sorted_topics: list of (topic, score) sorted ascending
+        weak_topics:   topics < 0.50
+        dev_topics:    topics 0.50 <= score < 0.75
+        strong_topics: topics >= 0.75
+        all_improvement_topics: weak + dev topics
+    """
+    sorted_topics = sorted(topic_scores.items(), key=lambda item: item[1])
+    weak_topics = [t for t, s in sorted_topics if s < WEAK_TOPIC_THRESHOLD]
+    dev_topics = [t for t, s in sorted_topics if WEAK_TOPIC_THRESHOLD <= s < DEVELOPING_TOPIC_THRESHOLD]
+    strong_topics = [t for t, s in sorted_topics if s >= DEVELOPING_TOPIC_THRESHOLD]
+    all_improvement_topics = weak_topics + dev_topics
+    return sorted_topics, weak_topics, dev_topics, strong_topics, all_improvement_topics
 
 def build_recommendation_text(pred_band: str) -> str:
-    """
-    Builds the base recommendation message based on the EXACT predicted OBP band.
-    """
     band_text = bandLabels.get(pred_band, pred_band)
-
     if pred_band == "Basic":
         base_message = (
             f"Your projected proficiency band is {band_text}. "
@@ -64,5 +69,4 @@ def build_recommendation_text(pred_band: str) -> str:
             "Analysis complete, but the predicted band was ambiguous. "
             "Please review your topic scores and overall performance."
         )
-
     return base_message
